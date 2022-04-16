@@ -1,4 +1,5 @@
 import './App.css';
+import React from "react"
 import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
@@ -7,9 +8,9 @@ import Box from '@mui/material/Box';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
-import Slider from '@mui/material/Slider';
-import Button from '@mui/material/Button';
-import Graph from "./Graph"
+
+import Graph from './Graph'
+import Settings from './Settings'
 
 
 const theme = createTheme({
@@ -21,7 +22,7 @@ const theme = createTheme({
 });
 
 
-const data = {
+const oldData = {
   points: [
     {x: 23, y: 27, centroid: 0},
     {x: 56, y: 93, centroid: 0},
@@ -40,7 +41,65 @@ const data = {
   ]
 }
 
+const randomAnchoredNum = (anchored) => {
+  while(true) { 
+    const num = anchored + ((Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 20))
+    if (num > 0 && num < 100)
+      return num
+  }
+}
+
+const generateDataSet = (numPoints, numClusters) =>  {
+
+  const dataset = { 
+    points: [],
+    centroids: []
+  }
+
+  const pointsPerCluster = Math.floor(numPoints / numClusters);
+
+  
+  for (let i = 0; i < numClusters; i++) { 
+
+    // create an anchoring point for the cluster
+    const anchor = { x: Math.floor(Math.random() * 100), y: Math.floor(Math.random() * 100)}
+    for(let j = 0; j < pointsPerCluster; j++) { 
+      //if it generates offscreen, then generate another point
+      const point = {
+        centroid: 0,
+        x: randomAnchoredNum(anchor.x),
+        y: randomAnchoredNum(anchor.y)
+      }
+      dataset.points.push(point)
+    }
+
+  }
+
+  //in case the number of points is not evenly divisible from clusters, add 
+  //some random points in to fill it out
+  while(dataset.points.length < numPoints) { 
+    const point = {
+      centroid: 0,
+      x: Math.floor(Math.random() * 100),
+      y: Math.floor(Math.random() * 100)
+    }
+    dataset.points.push(point)
+  }
+
+  return dataset
+}
+
 function App() {
+
+  const [numPoints, setNumPoints] = React.useState(200)
+  const [numClusters, setNumClusters] = React.useState(5)
+  const [numIter, setNumIter] = React.useState(10)
+  const [data, setData] = React.useState(null)
+
+  React.useEffect(() => {
+    setData(generateDataSet(numPoints, numClusters))
+  }, [numPoints, numClusters])
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -53,75 +112,10 @@ function App() {
             <Paper><Graph data={data}/></Paper>
           </Grid>
           <Grid item sm={12} md={4}>
-            <Paper>
-              <Box padding={1} >
-                
-                <Typography id="input-slider" gutterBottom>
-                    Dataset Size:
-                </Typography>
-                <Box sx={{display: 'flex'}}>
-                  <Typography marginRight={2}>
-                    100
-                  </Typography>
-                  <Slider
-                      defaultValue={300}
-                      step={100}
-                      marks
-                      min={100}
-                      max={500}
-                      valueLabelDisplay="auto"
-                  />
-                  <Typography marginLeft={2}>
-                  500
-                  </Typography>
-                </Box>
-
-                <Typography id="input-slider" gutterBottom>
-                    Number of Clusters:
-                </Typography>
-                <Box sx={{display: 'flex'}}>
-                  <Typography marginRight={2}>
-                    3
-                  </Typography>
-                  <Slider
-                      defaultValue={5}
-                      step={1}
-                      marks
-                      min={3}
-                      max={10}
-                      valueLabelDisplay="auto"
-                  />
-                  <Typography marginLeft={2}>
-                  10
-                  </Typography>
-                </Box>
-
-                <Typography id="input-slider" gutterBottom>
-                    Number of Iterations:
-                </Typography>
-                <Box sx={{display: 'flex'}}>
-                  <Typography marginRight={2}>
-                    10
-                  </Typography>
-                  <Slider
-                      defaultValue={10}
-                      step={10}
-                      marks
-                      min={10}
-                      max={100}
-                      valueLabelDisplay="auto"
-                  />
-                  <Typography marginLeft={2}>
-                  100
-                  </Typography>
-                </Box>
-                <Box textAlign='center' marginBottom={2}>
-                  <Button variant="contained">Run Simulation</Button>
-                </Box>
-              </Box>
-              
-
-            </Paper>
+            <Settings 
+              numPoints={numPoints} setNumPoints={setNumPoints} 
+              numClusters={numClusters} setNumClusters={setNumClusters} 
+              numIter={numIter} setNumIter={setNumIter}/>
           </Grid>
         </Grid>
       </Container>
