@@ -69,6 +69,8 @@ const GraphPoints = ({domain, data, ...props}) => {
 
 const Graph = ({width, height, margin, data, ...props}) => { 
 
+
+
   const [domain, setDomain] = React.useState(null)
 
   React.useEffect(() => { 

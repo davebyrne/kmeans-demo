@@ -9,6 +9,7 @@ const Settings = ({
     numPoints, setNumPoints,
     numClusters, setNumClusters,
     numIter, setNumIter,
+    onRunSimulation,
     ...props
 }) => {
 
@@ -78,7 +79,7 @@ const Settings = ({
                     </Typography>
                 </Box>
                 <Box textAlign='center' marginBottom={2}>
-                    <Button variant="contained">Run Simulation</Button>
+                    <Button variant="contained" onClick={onRunSimulation}>Run Simulation</Button>
                 </Box>
             </Box>
         </Paper>

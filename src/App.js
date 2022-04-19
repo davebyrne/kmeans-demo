@@ -9,6 +9,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
 
+import Kmeans from './Kmeans'
 import Graph from './Graph'
 import Settings from './Settings'
 
@@ -21,29 +22,9 @@ const theme = createTheme({
   }
 });
 
-
-const oldData = {
-  points: [
-    {x: 23, y: 27, centroid: 0},
-    {x: 56, y: 93, centroid: 0},
-    {x: 89, y: 34, centroid: 0},
-    {x: 45, y: 22, centroid: 1},
-    {x: 83, y: 88, centroid: 2},
-    {x: 12, y: 68, centroid: 2},
-    {x: 17, y: 44, centroid: 3},
-    {x: 78, y: 33, centroid: 3},
-    {x: 40, y: 38, centroid: 1}
-  ],
-  centroids: [
-    {id: 1, x: 44, y: 44},
-    {id: 2, x: 22, y: 22},
-    {id: 3, x: 55, y: 66}
-  ]
-}
-
 const randomAnchoredNum = (anchored) => {
   while(true) { 
-    const num = anchored + ((Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 20))
+    const num = anchored + ((Math.random() < 0.5 ? -1 : 1) * Math.floor(Math.random() * 13))
     if (num > 0 && num < 100)
       return num
   }
@@ -89,16 +70,64 @@ const generateDataSet = (numPoints, numClusters) =>  {
   return dataset
 }
 
+const generateInitialClusters = (data, numClusters) => { 
+  //pick random points to be centroids
+  for(let i = 1; i <= numClusters; i++) { 
+    const randNum = Math.floor(Math.random() * data.points.length)
+    data.centroids.push({
+      id: i, 
+      x: data.points[randNum].x,
+      y: data.points[randNum].y
+    })
+  }
+  return data
+}
+
+const resetData = (oldData) => {
+  
+  //clear centroids and return copy of data
+  return { 
+    points: oldData.points.map((e) => { return { centroid: 0, x: e.x, y: e.y } }),
+    centroids: [],
+  }
+}
+
+const runIter = (state) => { 
+
+  //move the point to the center of the centroid,
+  //now update cluster membership
+    
+  return {
+    points: state.points,
+    centroids: state.centroids.map((e) => { return { id: e.id, x: e.x + 3, y: e.y + 3 } }),
+  }
+}
+
 function App() {
 
   const [numPoints, setNumPoints] = React.useState(200)
   const [numClusters, setNumClusters] = React.useState(5)
   const [numIter, setNumIter] = React.useState(10)
-  const [data, setData] = React.useState(null)
+  const [data, setData] = React?.useState(null)
+  const iter = React.useRef(1)
+
+  const doIter = (data, iter) => { 
+    console.log("iteration " + iter.current)
+    iter.current = iter.current + 1
+    setData(data => runIter(data))
+    if(iter.current < numIter) { 
+      setTimeout(doIter, 1000, data, iter)
+    }
+  }
 
   React.useEffect(() => {
     setData(generateDataSet(numPoints, numClusters))
   }, [numPoints, numClusters])
+
+  const onRunSimulation = () => { 
+    setData(generateInitialClusters(resetData(data), numClusters))
+    setTimeout(doIter, 1000, data, iter)
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -115,7 +144,8 @@ function App() {
             <Settings 
               numPoints={numPoints} setNumPoints={setNumPoints} 
               numClusters={numClusters} setNumClusters={setNumClusters} 
-              numIter={numIter} setNumIter={setNumIter}/>
+              numIter={numIter} setNumIter={setNumIter}
+              onRunSimulation={onRunSimulation}/>
           </Grid>
         </Grid>
       </Container>
