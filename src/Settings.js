@@ -6,13 +6,12 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 const Settings = ({
-    numPoints, setNumPoints,
-    numClusters, setNumClusters,
-    numIter, setNumIter,
+    cfg, setCfg,
     onRunSimulation,
     ...props
 }) => {
 
+   
     return (
         <Paper>
             <Box padding={1} >
@@ -24,13 +23,13 @@ const Settings = ({
                         100
                     </Typography>
                     <Slider
-                        value={numPoints}
+                        value={cfg.numPoints}
                         step={100}
                         marks
                         min={100}
                         max={500}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setNumPoints(e.target.value)}
+                        onChange={(e) => setCfg((cfg) => { return { ...cfg, numPoints: e.target.value } })}
                     />
                     <Typography marginLeft={2}>
                         500
@@ -45,13 +44,13 @@ const Settings = ({
                         3
                     </Typography>
                     <Slider
-                        value={numClusters}
+                        value={cfg.numClusters}
                         step={1}
                         marks
                         min={3}
                         max={10}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setNumClusters(e.target.value)}
+                        onChange={(e) => setCfg((cfg) => { return { ...cfg, numClusters: e.target.value } })}
                     />
                     <Typography marginLeft={2}>
                         10
@@ -66,13 +65,13 @@ const Settings = ({
                         10
                     </Typography>
                     <Slider
-                        value={numIter}
+                        value={cfg.numIter}
                         step={10}
                         marks
                         min={10}
                         max={100}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setNumIter(e.target.value)}
+                        onChange={(e) => setCfg((cfg) => { return {...cfg, numIter: e.target.value } })}
                     />
                     <Typography marginLeft={2}>
                         100

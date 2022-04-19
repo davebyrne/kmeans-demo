@@ -8,10 +8,12 @@ import Box from '@mui/material/Box';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
+import _ from "lodash"
 
 import Kmeans from './Kmeans'
 import Graph from './Graph'
 import Settings from './Settings'
+
 
 
 const theme = createTheme({
@@ -30,12 +32,10 @@ const randomAnchoredNum = (anchored) => {
   }
 }
 
-const generateDataSet = (numPoints, numClusters) =>  {
+const generatePoints = (numPoints, numClusters) =>  {
+  console.log("generating points with " + numPoints)
 
-  const dataset = { 
-    points: [],
-    centroids: []
-  }
+  const points = []
 
   const pointsPerCluster = Math.floor(numPoints / numClusters);
 
@@ -51,84 +51,152 @@ const generateDataSet = (numPoints, numClusters) =>  {
         x: randomAnchoredNum(anchor.x),
         y: randomAnchoredNum(anchor.y)
       }
-      dataset.points.push(point)
+      points.push(point)
     }
 
   }
 
   //in case the number of points is not evenly divisible from clusters, add 
   //some random points in to fill it out
-  while(dataset.points.length < numPoints) { 
+  while(points.length < numPoints) { 
     const point = {
       centroid: 0,
       x: Math.floor(Math.random() * 100),
       y: Math.floor(Math.random() * 100)
     }
-    dataset.points.push(point)
+    points.push(point)
   }
 
-  return dataset
+  return points
 }
 
-const generateInitialClusters = (data, numClusters) => { 
+const generateInitialClusters = (points, numClusters) => { 
+
+  const clusters = []
   //pick random points to be centroids
   for(let i = 1; i <= numClusters; i++) { 
-    const randNum = Math.floor(Math.random() * data.points.length)
-    data.centroids.push({
+    const randNum = Math.floor(Math.random() * points.length)
+    clusters.push({
       id: i, 
-      x: data.points[randNum].x,
-      y: data.points[randNum].y
+      x: points[randNum].x,
+      y: points[randNum].y
     })
   }
-  return data
+  return clusters
 }
 
-const resetData = (oldData) => {
-  
-  //clear centroids and return copy of data
+const distance = (point1, point2) => { 
+  return Math.abs(Math.sqrt(
+    Math.pow(point2.x - point1.x, 2)
+    +
+    Math.pow(point2.y - point1.y, 2)
+  ))
+}
+
+const computeCentroid = (id, points) => { 
+  //filter the points down to this cluster
+  const idPoints = points.filter((e) => e.centroid == id)
+
+  //now get the average point
   return { 
-    points: oldData.points.map((e) => { return { centroid: 0, x: e.x, y: e.y } }),
-    centroids: [],
+    id: id,
+    x: idPoints.reduce((oldVal, newVal) => oldVal + newVal.x, 0) / idPoints.length,
+    y: idPoints.reduce((oldVal, newVal) => oldVal + newVal.y, 0) / idPoints.length
   }
+}
+
+const closestCentroid = (point, centroids) => { 
+
+  let retDistance; 
+  let retCentroid = point.centroid;
+
+  //loop through, if distance is less, then replace retCentroid
+  centroids.forEach((c) => { 
+    const d = distance(point, c)
+    if(!retDistance || d < retDistance) { 
+      retDistance = d
+      retCentroid = c.id
+    }
+  })
+
+  return retCentroid;
 }
 
 const runIter = (state) => { 
+  
+  console.log("iter is " + state.iter)
+  const newState = {
+    ...state, 
+    iter: state.iter+1,
+  }
 
   //move the point to the center of the centroid,
-  //now update cluster membership
-    
-  return {
-    points: state.points,
-    centroids: state.centroids.map((e) => { return { id: e.id, x: e.x + 3, y: e.y + 3 } }),
+  if(newState.centroids.length == 0) { 
+    newState.centroids = generateInitialClusters(state.points, state.cfg.numClusters)
+  } else { 
+    newState.centroids = newState.centroids.map((e) => computeCentroid(e.id, newState.points))
   }
+
+  newState.points = newState.points.map((e) => { return { centroid: closestCentroid(e, newState.centroids), x: e.x, y: e.y } })
+
+  //now update cluster membership
+  console.log(newState)
+  return newState;
+}
+
+const initialState = (cfg) => { 
+
+  return {
+    points: generatePoints(cfg.numPoints, cfg.numClusters),
+    centroids: [], 
+    cfg: cfg,
+    iter: 0
+  }   
+
 }
 
 function App() {
 
-  const [numPoints, setNumPoints] = React.useState(200)
-  const [numClusters, setNumClusters] = React.useState(5)
-  const [numIter, setNumIter] = React.useState(10)
-  const [data, setData] = React?.useState(null)
-  const iter = React.useRef(1)
+  //initialstate is being called on each render....
+  const [data, setData] = React.useState()
+ 
+  const doIter = () => {  
+    setData((data) => {
+      if(data.iter >= data.cfg.numIter)
+        return data
 
-  const doIter = (data, iter) => { 
-    console.log("iteration " + iter.current)
-    iter.current = iter.current + 1
-    setData(data => runIter(data))
-    if(iter.current < numIter) { 
-      setTimeout(doIter, 1000, data, iter)
-    }
+      const newState = runIter(data)
+      setTimeout(doIter, 300)
+      return newState
+    })
   }
 
-  React.useEffect(() => {
-    setData(generateDataSet(numPoints, numClusters))
-  }, [numPoints, numClusters])
+  const onCfgChange = (withCfg) => { 
+    //only regenerate data if the cfg is different
+    setData(data => {
+      const newCfg = withCfg(data.cfg)
+      if(_.isEqual(data.cfg, newCfg)) 
+        return data
+      
+      return initialState(newCfg)      
+    })
+  }
 
   const onRunSimulation = () => { 
-    setData(generateInitialClusters(resetData(data), numClusters))
-    setTimeout(doIter, 1000, data, iter)
+    doIter()    
   }
 
+  React.useEffect(() => { 
+    setData(initialState({ 
+        numPoints: 300,
+        numClusters: 5, 
+        numIter: 10
+    }))
+  }, [])
+
+  if(!data)
+    return
+  
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -142,9 +210,7 @@ function App() {
           </Grid>
           <Grid item sm={12} md={4}>
             <Settings 
-              numPoints={numPoints} setNumPoints={setNumPoints} 
-              numClusters={numClusters} setNumClusters={setNumClusters} 
-              numIter={numIter} setNumIter={setNumIter}
+              cfg={data.cfg} setCfg={onCfgChange}
               onRunSimulation={onRunSimulation}/>
           </Grid>
         </Grid>
