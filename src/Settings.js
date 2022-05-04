@@ -89,19 +89,19 @@ const Tools = () => {
             </Typography>
             <Box sx={{ display: 'flex' }}>
                 <Typography marginRight={2}>
-                    10
+                    5
                 </Typography>
                 <Slider
                     value={cfg.numIter}
-                    step={10}
+                    step={1}
                     marks
-                    min={10}
-                    max={100}
+                    min={5}
+                    max={20}
                     valueLabelDisplay="auto"
                     onChange={(e) => dispatch(setNumIterations(e.target.value))}
                 />
                 <Typography marginLeft={2}>
-                    100
+                    20
                 </Typography>
             </Box>
             <Box textAlign='center' marginBottom={2}>
