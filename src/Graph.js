@@ -17,7 +17,7 @@ const GraphAxis = ({domain}) => {
         .call(d3.axisBottom(domain.x))
       d3.select(yRef.current).call(d3.axisLeft(domain.y))
     }
-  }, [])
+  }, [domain])
 
   return (
     <>
@@ -59,7 +59,7 @@ const GraphPoints = ({domain, data, ...props}) => {
       .attr("fill", value => colors[value.id])
       .attr("stroke", value => colors[value.id])
 
-  }, [data]);
+  }, [data, domain]);
 
  
   return ( 

@@ -8,7 +8,6 @@ import Box from '@mui/material/Box';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createTheme } from '@mui/material/styles';
-import _ from "lodash"
 import store from './store'
 import { Provider } from 'react-redux'
 import { useSelector, useDispatch } from 'react-redux';
@@ -32,10 +31,10 @@ const Wrapper = ({children}, ...props) => {
 
   const timerRef = React.createRef()
 
-  const iter = () => { 
+  const iter = React.useCallback(() => { 
     dispatch(step())
     timerRef.current = setTimeout(iter, 300)
-  }
+  }, [timerRef, dispatch])
 
   // check to see if timer is already scheduled?
   React.useEffect(() => { 
@@ -43,7 +42,7 @@ const Wrapper = ({children}, ...props) => {
       timerRef.current = setTimeout(iter, 300)
     }
     return () => clearTimeout(timerRef.current)
-  }, [status.running])
+  }, [status.running, iter, timerRef])
   return (
     <>
     {children}

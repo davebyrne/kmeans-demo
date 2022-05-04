@@ -44,7 +44,7 @@ const distance = (point1, point2) => {
 
 const computeCentroid = (id, points) => { 
   //filter the points down to this cluster
-  const idPoints = points.filter((e) => e.centroid == id)
+  const idPoints = points.filter((e) => e.centroid === id)
 
   //now get the average point
   return { 
