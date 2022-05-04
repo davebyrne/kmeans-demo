@@ -2,6 +2,7 @@ import React from "react"
 import Slider from '@mui/material/Slider';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
+import LinearProgress from '@mui/material/LinearProgress';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { useSelector, useDispatch } from 'react-redux';
@@ -22,11 +23,15 @@ const Settings = () => {
 
 const Status = () => { 
     const status = useSelector(selectRuntimeStatus)
+    const cfg = useSelector(selectCfg);
 
     return ( 
-        <Typography gutterBottom>
-            Running iteration {status.iter}
-        </Typography>
+        <Box>
+            <Typography gutterBottom>
+                Running iteration {status.iter} of {cfg.numIter}
+            </Typography>
+            <LinearProgress variant="determinate" value={Math.ceil((status.iter / cfg.numIter) * 100)} />
+        </Box>
     )
 }
 
