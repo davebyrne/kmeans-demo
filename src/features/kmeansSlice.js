@@ -1,11 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
 
-const initialCfg = {
-  numPoints: 300,
-  numClusters: 5, 
-  numIter: 10
-}
-
 
 const randomAnchoredNum = (anchored) => {
   while(true) { 
@@ -42,16 +36,31 @@ const distance = (point1, point2) => {
   ))
 }
 
-const computeCentroid = (id, points) => { 
+const computeCentroid = (centroid, points, maxDelta) => { 
+
+  //if the centroid has already converged, then skip it
+  if(centroid.converged === true) { 
+    return centroid
+  }
+
   //filter the points down to this cluster
-  const idPoints = points.filter((e) => e.centroid === id)
+  const idPoints = points.filter((e) => e.centroid === centroid.id)
 
   //now get the average point
-  return { 
-    id: id,
+  const newCentroid = { 
+    id: centroid.id,
     x: idPoints.reduce((oldVal, newVal) => oldVal + newVal.x, 0) / idPoints.length,
-    y: idPoints.reduce((oldVal, newVal) => oldVal + newVal.y, 0) / idPoints.length
+    y: idPoints.reduce((oldVal, newVal) => oldVal + newVal.y, 0) / idPoints.length,
+    converged: false
   }
+
+  const delta = distance(centroid, newCentroid)
+  if(delta < maxDelta) { 
+    //console.log("centroid " + centroid.id + " converged")
+    newCentroid.converged = true
+  }
+
+  return newCentroid
 }
 
 
@@ -64,7 +73,8 @@ const generateInitialClusters = (points, numClusters) => {
     clusters.push({
       id: i, 
       x: points[randNum].x,
-      y: points[randNum].y
+      y: points[randNum].y,
+      converged: false
     })
   }
   return clusters
@@ -109,22 +119,38 @@ const generatePoints = (numPoints, numClusters) =>  {
 
   return points
 }
+const initialCfg = {
+  numPoints: 300,
+  numClusters: 5, 
+  numIter: 10,
+  maxDelta: 0.05
+}
+
+const initialState = {
+  data: { 
+    points: generatePoints(initialCfg.numPoints, initialCfg.numClusters),
+    centroids: [],
+  },
+  cfg: initialCfg,
+  runtimeStatus: { 
+    iter: 0,
+    converged: false,
+    running: false,
+    finished: false
+  }
+}
 
 export const kmeansSlice = createSlice({
   name: 'kmeans',
-  initialState: {
-    data: { 
-      points: generatePoints(initialCfg.numPoints, initialCfg.numClusters),
-      centroids: [],
-    },
-    cfg: initialCfg,
-    runtimeStatus: { 
-      iter: 0,
-      converged: false,
-      running: false
-    }
-  },
+  initialState,
   reducers: {
+    reset: (state) => {
+      state.runtimeStatus.iter = 0
+      state.runtimeStatus.converged = false
+      state.runtimeStatus.finished = false
+      state.data.centroids = []
+      state.data.points = state.data.points.map((e) => { return { centroid: 0, x: e.x, y: e.y } })
+    },
     setNumPoints: (state, action) => {
       if(state.cfg.numPoints !== action.payload) {
         state.cfg.numPoints = action.payload
@@ -148,18 +174,24 @@ export const kmeansSlice = createSlice({
       state.runtimeStatus.iter += 1
 
       //move the point to the center of the centroid,
-      state.data.centroids = state.data.centroids.map((e) => computeCentroid(e.id, state.data.points))
+      state.data.centroids = state.data.centroids.map((e) => computeCentroid(e, state.data.points, state.cfg.maxDelta))
 
       //update cluster membership
       state.data.points = state.data.points.map((e) => { return { centroid: closestCentroid(e, state.data.centroids), x: e.x, y: e.y } })
 
+      // if we have passed max iterations, or if every cluster has convereged, then set the status to stop running
       if(state.runtimeStatus.iter >= state.cfg.numIter) { 
         state.runtimeStatus.running = false
+        state.runtimeStatus.finished = true
+      } else if (state.data.centroids.every((e) => e.converged === true)) { 
+        state.runtimeStatus.running = false
+        state.runtimeStatus.converged = true
+        state.runtimeStatus.finished = true
       }
     },
     start: (state) => { 
       //set running to be true and clear and existing centroids / membership
-      state.runtimeStatus.running= true
+      state.runtimeStatus.running = true
       state.runtimeStatus.iter = 1
       state.data.centroids = generateInitialClusters(state.data.points, state.cfg.numClusters)
       //update cluster membership
@@ -170,7 +202,7 @@ export const kmeansSlice = createSlice({
 
 
 // Action creators are generated for each case reducer function
-export const { setNumPoints, setNumClusters, setNumIterations, step, start } = kmeansSlice.actions
+export const { setNumPoints, setNumClusters, setNumIterations, step, start, reset } = kmeansSlice.actions
 
 export const selectCfg = (state) => state.kmeans.cfg
 
