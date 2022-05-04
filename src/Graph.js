@@ -111,7 +111,6 @@ const Graph = ({width, height, margin, data, ...props}) => {
 const GraphWrapper = ({...props}) => { 
   const margin = { left: 50, top: 50, bottom: 50, right: 50}
   const data = useSelector(selectData)
-  console.log(data)
   return <Graph width={400} height={400} margin={margin} data={data} {...props}/>
 }
 export default GraphWrapper;
