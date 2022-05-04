@@ -4,14 +4,14 @@ import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import { useSelector, useDispatch } from 'react-redux';
 
-const Settings = ({
-    cfg, setCfg,
-    onRunSimulation,
-    ...props
-}) => {
+import { setNumPoints, setNumClusters, setNumIterations, selectCfg, start } from "./features/kmeansSlice";
+const Settings = () => {
 
-   
+    const cfg = useSelector(selectCfg);
+    const dispatch = useDispatch()
+      
     return (
         <Paper>
             <Box padding={1} >
@@ -29,7 +29,7 @@ const Settings = ({
                         min={100}
                         max={500}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setCfg((cfg) => { return { ...cfg, numPoints: e.target.value } })}
+                        onChange={(e) => dispatch(setNumPoints(e.target.value))}
                     />
                     <Typography marginLeft={2}>
                         500
@@ -50,7 +50,7 @@ const Settings = ({
                         min={3}
                         max={10}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setCfg((cfg) => { return { ...cfg, numClusters: e.target.value } })}
+                        onChange={(e) => dispatch(setNumClusters(e.target.value))}
                     />
                     <Typography marginLeft={2}>
                         10
@@ -71,14 +71,14 @@ const Settings = ({
                         min={10}
                         max={100}
                         valueLabelDisplay="auto"
-                        onChange={(e) => setCfg((cfg) => { return {...cfg, numIter: e.target.value } })}
+                        onChange={(e) => dispatch(setNumIterations(e.target.value))}
                     />
                     <Typography marginLeft={2}>
                         100
                     </Typography>
                 </Box>
                 <Box textAlign='center' marginBottom={2}>
-                    <Button variant="contained" onClick={onRunSimulation}>Run Simulation</Button>
+                    <Button variant="contained" onClick={() => dispatch(start())}>Run Simulation</Button>
                 </Box>
             </Box>
         </Paper>

@@ -1,4 +1,7 @@
 import React from "react"
+import { useSelector } from 'react-redux';
+
+import { selectData } from "./features/kmeansSlice";
 import * as d3 from "d3"
 
 const GraphAxis = ({domain}) => { 
@@ -107,6 +110,8 @@ const Graph = ({width, height, margin, data, ...props}) => {
 
 const GraphWrapper = ({...props}) => { 
   const margin = { left: 50, top: 50, bottom: 50, right: 50}
-  return <Graph width={400} height={400} margin={margin} {...props}/>
+  const data = useSelector(selectData)
+  console.log(data)
+  return <Graph width={400} height={400} margin={margin} data={data} {...props}/>
 }
 export default GraphWrapper;
